@@ -1,0 +1,21 @@
+server:
+  port: 8099
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    
+bigcatai:
+  dialogflow.client.config:
+      project-id: ${bigcatai.dialogflow.client.config.project-id}
+      session-id: ${bigcatai.dialogflow.client.config.session-id}
+  openai.client.config:
+      onnection-timout: 60
+      read_timeout: 120
+      completions-api-endpoint-url: https://api.openai.com/v1/completions
+      embeddings-api-endpoint-url: https://api.openai.com/v1/embeddings 
+      chat-completions-api-endpoint-url: https://api.openai.com/v1/chat/completions
+      api-key: ${bigcatai.openai.client.config.api-key}
+      host: OPENAI
+      
+      
+      
