@@ -8,26 +8,37 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import com.bigcatai.matchingengine.model.KnowledgeEmbeddingSearchResult;
 import com.bigcatai.matchingengine.utils.BytesConvertor;
 import com.bigcatai.matchingengine.vectordatabase.VectorDatabase;
+import com.bigcatai.matchingengine.vectordatabase.VectorDatabaseConfiguration;
 
 import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.search.Document;
 import redis.clients.jedis.search.Query;
 
 @Service
+@ConditionalOnProperty(
+        value="bigcatai.vector-database.config.type", 
+        havingValue = "REDIS", 
+        matchIfMissing = false)
 public class RedisVectorDatabase implements VectorDatabase {
 
-    private static Logger LOG = LoggerFactory.getLogger(RedisVectorDatabaseInitializr.class);
+    private static Logger LOG = LoggerFactory.getLogger(RedisVectorDatabase.class);
     
-    public List<KnowledgeEmbeddingSearchResult> searchSimilarVector (Double[] vector) {
-        try(JedisPooled client = new JedisPooled("localhost", 6379)) {
+    @Autowired
+    VectorDatabaseConfiguration config;
+    
+    public List<KnowledgeEmbeddingSearchResult> searchSimilarVector (Double[] vector, double relatednessThreshold, int limitCount) {
+        
+        try(JedisPooled client = new JedisPooled(config.getRedisHost(), Integer.parseInt(config.getRedisPort()))) {
             
             Query query = new Query("(@dt:["+getTimestampFourMonthsAgo()+" "+System.currentTimeMillis()+"])=>[KNN $K @v $BLOB AS relatedness_score]")
-                    .addParam("K", 20)
+                    .addParam("K", limitCount)
                     .addParam("BLOB",BytesConvertor.doubleArrayToBytesLittleEndianOrder(vector))
                     .setSortBy("relatedness_score", true)
                     .returnFields("relatedness_score")
@@ -35,16 +46,22 @@ public class RedisVectorDatabase implements VectorDatabase {
             
             List<Document> documents = client.ftSearch(index, query).getDocuments();
             
-            LOG.info("Number of documents found: "+documents.size());
+            LOG.info("Number of documents found before filter: "+documents.size());
             
             List<KnowledgeEmbeddingSearchResult> result = new ArrayList<>();
             
             for (Document d : documents) {
-                KnowledgeEmbeddingSearchResult knowledgeEmbedding = new KnowledgeEmbeddingSearchResult();
-                knowledgeEmbedding.setKsid(Integer.parseInt(d.getId()));
-                knowledgeEmbedding.setRelatedness(1-Double.valueOf(d.getString("relatedness_score")));
-                result.add(knowledgeEmbedding);
+                
+                double relatedness = 1-Double.valueOf(d.getString("relatedness_score"));
+                if (relatedness >= relatednessThreshold) {
+                    KnowledgeEmbeddingSearchResult knowledgeEmbedding = new KnowledgeEmbeddingSearchResult();
+                    knowledgeEmbedding.setKsid(Integer.parseInt(d.getId()));
+                    knowledgeEmbedding.setRelatedness(relatedness);
+                    result.add(knowledgeEmbedding);
+                }
             }
+            
+            LOG.info("Number of documents found after filter: "+result.size());
             
             return result;
         }

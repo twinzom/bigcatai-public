@@ -8,5 +8,5 @@ public interface VectorDatabase {
     
     String index = "default-index";
     
-    public List<KnowledgeEmbeddingSearchResult> searchSimilarVector (Double[] vector);
+    public List<KnowledgeEmbeddingSearchResult> searchSimilarVector (Double[] vector, double relatednessThreshold, int limitCount);
 }

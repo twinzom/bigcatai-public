@@ -1,0 +1,59 @@
+<html>
+  <head>
+    <title>Upload File</title>
+    <style>
+      .card {
+        width: 300px;
+        box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);
+        border: none;
+        background-color: white;
+        padding: 10px;
+        animation: phaseIn 0.5s ease-in-out;
+        margin: 10px;
+      }
+    
+      .card-header {
+        cursor: pointer;
+      }
+    
+      .card-header:hover {
+        color: blue;
+      }
+    
+      .card-icon {
+        bottom: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+      }
+    
+      @keyframes phaseIn {
+        from {
+          transform: translateY(20%);
+        }
+        to {
+          transform: translateY(0%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="card-header" onclick="window.location.href='https://www.example.com'"><h4>Autumn Statement 2022 - "Decisions of eye-watering difficulty"</h4></div>
+      <div class="card-content">UK government announced £55 billion in fiscal consolidation to plug the large gap in the public finances. New fiscal rules, spending in energy, infrastructure and other initiatives, lowering of tax thresholds, freezing of tax rates, reduction of CGT exemption, increase of SDLT nil-rate threshold, increase of minimum wage, extension of threshold freeze, increase of diverted profits tax, maintenance of pensions triple lock, increase of benefits, NIC secondary threshold, VAT registration threshold, new SDLT rates, additional flexibility in setting council tax, Electric vehicles no longer exempt from Vehicle Excise Duty, removal of cap on senior bankers bonuses and creation of 38 new low-tax, low-regulation investment zones.</div>
+      <img class="card-icon" src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png" />
+    </div>
+    
+    <div class="card">
+      <div class="card-header" onclick="window.location.href='https://www.example.com'"><h4>Autumn Statement 2022 - "Decisions of eye-watering difficulty"</h4></div>
+      <div class="card-content">UK government announced £55 billion in fiscal consolidation to plug the large gap in the public finances. New fiscal rules, spending in energy, infrastructure and other initiatives, lowering of tax thresholds, freezing of tax rates, reduction of CGT exemption, increase of SDLT nil-rate threshold, increase of minimum wage, extension of threshold freeze, increase of diverted profits tax, maintenance of pensions triple lock, increase of benefits, NIC secondary threshold, VAT registration threshold, new SDLT rates, additional flexibility in setting council tax, Electric vehicles no longer exempt from Vehicle Excise Duty, removal of cap on senior bankers bonuses and creation of 38 new low-tax, low-regulation investment zones.</div>
+      <img class="card-icon" src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png" />
+    </div>
+    
+    <script>
+      document.querySelector('.card-header').addEventListener('click', function() {
+        window.location.href = 'https://www.example.com';
+      });
+    </script>
+  </body>
+</html>

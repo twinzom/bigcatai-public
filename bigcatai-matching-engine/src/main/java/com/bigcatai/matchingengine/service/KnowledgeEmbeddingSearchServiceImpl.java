@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.bigcatai.matchingengine.model.KnowledgeEmbeddingSearchResult;
+import com.bigcatai.matchingengine.vectordatabase.VectorDatabase;
 import com.bigcatai.matchingengine.vectordatabase.redis.RedisVectorDatabase;
 import com.bigcatai.openai.client.OpenaiApiEmbeddingsClient;
 import com.bigcatai.openai.client.models.OpenaiEmbeddingsRequest;
@@ -21,16 +22,15 @@ public class KnowledgeEmbeddingSearchServiceImpl implements KnowledgeEmbeddingSe
     private static Logger LOG = LoggerFactory.getLogger(KnowledgeEmbeddingSearchServiceImpl.class);
     
     @Autowired
-    RedisVectorDatabase redisVectorDatabase;
+    VectorDatabase vectorDatabase;
     
     @Autowired
     OpenaiApiEmbeddingsClient openaiApiEmbeddingsClient;
     
     @Override
     public List<KnowledgeEmbeddingSearchResult> search (String questionText, double relatednessThreshold, int limitCount) {
-        Double[] questionVector;
         
-        System.out.println(questionText);
+        Double[] questionVector;
         
         try {
             questionVector = this.embedQuestion(questionText);
@@ -38,7 +38,7 @@ public class KnowledgeEmbeddingSearchServiceImpl implements KnowledgeEmbeddingSe
             e.printStackTrace();
             return new ArrayList<>();
         }
-        List<KnowledgeEmbeddingSearchResult> searchResult = redisVectorDatabase.searchSimilarVector(questionVector);
+        List<KnowledgeEmbeddingSearchResult> searchResult = vectorDatabase.searchSimilarVector(questionVector, relatednessThreshold, limitCount);
         return searchResult;
     }
     

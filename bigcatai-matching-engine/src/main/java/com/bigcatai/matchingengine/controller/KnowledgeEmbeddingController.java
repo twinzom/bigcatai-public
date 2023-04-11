@@ -35,7 +35,7 @@ class KnowledgeEmbeddingController {
         response.setKnowledgeEmbeddings(knowledgeEmbeddingSearchService.search(
                 request.getQuestion(), 
                 0.8, 
-                5));
+                20));
         
         return response;
     } 

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GPT@PBW - Article Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <style>
+      body
+      {
+          font-family: 'Helvetica', 'Arial', sans-serif;
+          color: #444444;
+          font-size: 9pt;
+          background-color: #FAFAFA;
+      }
+    
+      .article-card {
+        width: 100%;
+        box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.2);
+        border: none;
+        background-color: white;
+        padding: 10px;
+        animation: phaseIn 0.5s ease-in-out;
+        margin: 20px;
+      }
+    
+      .article-card-header {
+        cursor: pointer;
+      }
+    
+      .article-card-header:hover {
+        color: blue;
+      }
+      
+      .article-card-footer {
+        height: 30px;
+      }
+    
+      .article-card-icon {
+        bottom: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+      }
+    
+      @keyframes phaseIn {
+        from {
+          transform: translateY(20%);
+        }
+        to {
+          transform: translateY(0%);
+        }
+      }
+      
+      #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+
+      #spinner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="fixed-top"  style="background: white">
+      <nav class="navbar navbar-expand-lg mb-4" style="background: #D22730">
+        <div class="container">
+          <a class="navbar-brand" href="#" style="color: white">GPT@PBW</a>
+        </div>
+      </nav>
+      <div class="container" style="max-width: 1000px;">
+        <div class="row" style="background: white">
+          <div class="col">
+              <h2>Search Article About...</h2>
+              <div class="input-group input-group-lg mb-3">  
+                <input type="text" id="question" class="form-control" placeholder="Context" aria-label="Context" aria-describedby="button-addon2" onkeypress="if(event.keyCode == 13) sendRequest()">
+                <button class="btn btn-outline-secondary" type="button" id="button-addon2" onclick="sendRequest()">Search</button>
+              </div>
+          </div>
+        </div>
+      </div>
+      <div id="overlay" style="display: none;">
+        <div id="spinner" class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+    <div class="container" style="margin-top: 220px; max-width: 980px;">
+      <div class="row">
+        <div class="col" id="article-holder">
+          <h3>E.g.</h3>
+          <h3><span class="badge bg-secondary" onClick="exampleClicked(this)">Fed Rate Hike</span></h3>
+          <h3><span class="badge bg-secondary" onClick="exampleClicked(this)">Fixed income</span></h3>
+          <h3><span class="badge bg-secondary" onClick="exampleClicked(this)">Inflation</span></h3>
+          <h3><span class="badge bg-secondary" onClick="exampleClicked(this)">Europe energy</span></h3>
+          <h3><span class="badge bg-secondary" onClick="exampleClicked(this)">Europe stock market</span></h3>
+        </div>
+      </div>
+      <div class="row p-2">
+        <div class="col" id="card-holder">
+        
+        </div>
+      </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    <script>
+      function sendRequest() {
+        if (document.getElementById("question").value) {
+          showOverlay();
+          cleanUp();
+          let question = "Write an article for topic\""+document.getElementById("question").value+"\".";
+          let jsonObject = { 
+              "question": question, 
+              "bankNames" : ["HSBC", "JPM", "BARCLAYS"], 
+              "startDate" : null,
+              "endDate" : null };
+          let xhr = new XMLHttpRequest();
+          xhr.open("POST", "/simpleQuery/insight-search", true);
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.onreadystatechange = function () {
+            hideOverlay();
+            if (xhr.readyState === 4 && xhr.status === 200) {
+              let responseText = xhr.responseText;
+              console.log(responseText);
+              let response = JSON.parse(responseText);
+              if (!response.error) {
+                renderResponse(response); 
+              } else {
+                renderError(response);
+              }
+            }
+          };
+          xhr.send(JSON.stringify(jsonObject));
+        }
+      }
+      
+      function cleanUp () {
+        let articleHolder = document.getElementById('article-holder');
+        let cardHolder = document.getElementById('card-holder');
+        articleHolder.innerHTML = "";
+        cardHolder.innerHTML = "";
+      }
+      
+      function renderError(response) {
+        // Create error message
+        let errorMessage = document.createElement('h3');
+        errorMessage.innerHTML = response.error;
+        let articleHolder = document.getElementById('article-holder');
+        articleHolder.appendChild(errorMessage);
+      }
+      
+      function renderResponse(response) {
+        
+        for (var i = 0; i < response.insights.length; i++) {
+          var insight = response.insights[i];
+          createCard(insight.title, insight.url, insight.breifSummary, insight.bankName, insight.summary, i);
+        }
+      }
+      
+      function createCard(title, url, summary, bankName, longSummary, index) {
+        // Create card
+        let card = document.createElement('div');
+        card.className = 'article-card';
+
+        // Create header
+        let header = document.createElement('div');
+        header.className = 'article-card-header';
+        let link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        let h5 = document.createElement('h5');
+        link.appendChild(h5);
+        header.appendChild(link);
+        h5.innerHTML = title;
+        card.appendChild(header);
+
+        // Create content
+        let content = document.createElement('div');
+        content.className = 'article-card-content';
+        content.innerHTML = summary;
+        card.appendChild(content);        
+        
+        // Create toogle area
+        let toogleArea = document.createElement('div');
+        
+        let toogleButton = document.createElement('a');
+        toogleButton.innerHTML = "Show More";
+        toogleButton.id = 'insight-show-button-'+index;
+        toogleButton.href= "javascript:toggleSummary("+index+")";
+        
+        let toogleTextArea =  document.createElement('textarea');
+        toogleTextArea.id = 'insight-summary-'+index;
+        toogleTextArea.value = longSummary;
+        toogleTextArea.style.border = "none";
+        toogleTextArea.style.display = "none";
+        toogleTextArea.style.width = "100%";
+        toogleTextArea.style.backgroundColor = "#FFFFE0";
+        
+        toogleArea.appendChild(toogleButton);
+        toogleArea.appendChild(toogleTextArea);
+        card.appendChild(toogleArea);
+        
+        // Create footer
+        let footer = document.createElement('div');
+        footer.className = 'article-card-footer';
+        let icon = document.createElement('img');
+        icon.src = `/img/${bankName}.png`;
+        icon.style.float = 'right';
+        icon.className = 'article-card-icon';
+        footer.appendChild(icon);
+        card.appendChild(footer);
+
+        // Push card to container
+        let container = document.getElementById('card-holder');
+        container.appendChild(card);
+        
+      }
+      
+      function typeText(text, element) {
+        let i = 0;
+        let interval = setInterval(function() {
+          element.value += text.charAt(i);
+          element.style.height = element.scrollHeight + "px";
+          i++;
+          if (i > text.length) {
+            clearInterval(interval);
+          }
+        }, 1);
+      }
+      
+      function showOverlay() {
+        document.getElementById("overlay").style.display = "block";
+      }
+      function hideOverlay() {
+        document.getElementById("overlay").style.display = "none"
+      }
+      
+      function exampleClicked(e) {
+        document.getElementById("question").value = e.innerHTML;
+      }
+      function toggleSummary(i) {
+        var element = document.getElementById("insight-summary-"+i);
+        if (element.style.display === "none") {
+          element.style.display = "block";
+          element.style.height = (element.scrollHeight + 30) + "px";
+          document.getElementById("insight-show-button-"+i).innerHTML = 'Show Less';
+        } else {
+          element.style.display = "none";
+          document.getElementById("insight-show-button-"+i).innerHTML = 'Show More';
+        }
+      }
+    </script>
+  </body>
+</html>
